@@ -73,6 +73,7 @@ def generate_default_config():
     }
     with open(CONFIG_FILE, 'w',encoding='utf8') as file:
         json.dump(config, file, indent=4)
+    os.chmod(CONFIG_FILE, 0o600)
     send_to_log(f"info",f"First launch. New config file {CONFIG_FILE} generated and needs to be configured.Then you will be able to autocreate MySQL tables for this program.")
     print(f"First launch. New config file {CONFIG_FILE} generated and needs to be configured.Then you will be able to autocreate MySQL tables for this program.")
     quit()
