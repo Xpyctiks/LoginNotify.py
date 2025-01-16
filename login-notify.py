@@ -303,9 +303,9 @@ def mainCheck():
             try:
                 obj = IPWhois(PAM_RHOST)
                 info = obj.lookup_whois()
-                COUNTRY=info['nets'][0]['country']
-                CITY=info['nets'][0]['city']
-                DESC=info['nets'][0]['description']
+                COUNTRY=info['asn_country_code']
+                CITY=info['nets'][0]['address']
+                DESC=info['asn_description']
             except Exception as msg:
                 COUNTRY=msg
                 CITY=""
@@ -317,7 +317,7 @@ def mainCheck():
     except Exception as msg:
         print(f"MySQL Error! {msg}")
         send_to_log(f"error",{msg})
-        quit()    
+        quit()
 
 def main():
     config = load_config()
