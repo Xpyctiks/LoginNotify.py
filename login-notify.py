@@ -175,7 +175,7 @@ def initDB():
         cursor.close()
         connection.close()
         print(f"Database initialized successfully!")
-        print(f"Finally you need to add to the end of /etc/pam.d/sshd next string: \"session optional pam_exec.so [{os.path.abspath(__file__)}\"]")
+        print(f"Finally you need to add to the end of /etc/pam.d/sshd next string: \"session optional pam_exec.so [{os.path.abspath(__file__)}]\"")
         print(f"If you want to log TTYs logins, not only SSH: add to the end of /etc/pam.d/login the string above too")
         send_to_log(f"info",f"MySQL database initialized successfully!")
     except Exception as msg:
@@ -311,7 +311,7 @@ def mainCheck():
                 CITY=""
                 DESC=""
             send_to_log(f"info",f"Type:{PAM_TYPE} User:{PAM_USER} Service:{PAM_SERVICE} TTY:{PAM_TTY} IP:{PAM_RHOST} Info: {COUNTRY},{CITY},{DESC}")
-            send_to_telegram(f"{PAM_TYPE} from unconfirmed addr",f"Service: {PAM_SERVICE} TTY: {PAM_TTY} - {time}\nUser: {PAM_USER}\nIP: {PAM_RHOST}\nInfo: {COUNTRY},{CITY},{DESC}")
+            send_to_telegram(f"{PAM_TYPE} to {os.uname().nodename} from unconfirmed addr",f"Service: {PAM_SERVICE} TTY: {PAM_TTY} - {time}\nUser: {PAM_USER}\nIP: {PAM_RHOST}\nInfo: {COUNTRY},{CITY},{DESC}")
         cursor.close()
         connection.close()
     except Exception as msg:
