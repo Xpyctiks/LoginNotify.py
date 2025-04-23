@@ -7,6 +7,7 @@ import json
 import logging
 import logging.handlers
 import requests
+import asyncio
 import mysql.connector
 from ipwhois import IPWhois
 from datetime import datetime
@@ -99,7 +100,7 @@ def send_to_log(type,logData):
         logger.setLevel(logging.INFO)
         logger.info(f"Login-Notify: {logData}")
 
-def send_to_telegram(subject,message):
+async def send_to_telegram(subject,message):
     headers = {
         'Content-Type': 'application/json',
     }
@@ -107,7 +108,7 @@ def send_to_telegram(subject,message):
         "chat_id": f"{TELEGRAM_CHATID}",
         "text": f"{subject}\n{message}",
     }
-    response = requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", timeout=10, headers=headers, json=data)
+    await response = requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", timeout=10, headers=headers, json=data)
     print(response.status_code)
     if response.status_code != 200:
         err = response.json()
@@ -298,7 +299,7 @@ def mainCheck():
         if len(res) > 0:
             for i in res:
                 send_to_log("info",f"Type:{PAM_TYPE} User:{PAM_USER} Service:{PAM_SERVICE} TTY:{PAM_TTY} IP:{PAM_RHOST} Comment:{i[3]}")
-                send_to_telegram(f"{PAM_TYPE} to {os.uname().nodename}",f"Service: {PAM_SERVICE} TTY: {PAM_TTY} - {time}\nUser: {PAM_USER}\nIP: {PAM_RHOST}\nComment: {i[3]}")
+                asyncio.run(send_to_telegram(f"{PAM_TYPE} to {os.uname().nodename}",f"Service: {PAM_SERVICE} TTY: {PAM_TTY} - {time}\nUser: {PAM_USER}\nIP: {PAM_RHOST}\nComment: {i[3]}"))
         else:
             try:
                 obj = IPWhois(PAM_RHOST)
@@ -311,7 +312,7 @@ def mainCheck():
                 CITY=""
                 DESC=""
             send_to_log(f"info",f"Type:{PAM_TYPE} User:{PAM_USER} Service:{PAM_SERVICE} TTY:{PAM_TTY} IP:{PAM_RHOST} Info: {COUNTRY},{CITY},{DESC}")
-            send_to_telegram(f"{PAM_TYPE} to {os.uname().nodename} from unconfirmed addr",f"Service: {PAM_SERVICE} TTY: {PAM_TTY} - {time}\nUser: {PAM_USER}\nIP: {PAM_RHOST}\nInfo: {COUNTRY},{CITY},{DESC}")
+            asyncio.run(send_to_telegram(f"{PAM_TYPE} to {os.uname().nodename} from unconfirmed addr",f"Service: {PAM_SERVICE} TTY: {PAM_TTY} - {time}\nUser: {PAM_USER}\nIP: {PAM_RHOST}\nInfo: {COUNTRY},{CITY},{DESC}"))
         cursor.close()
         connection.close()
     except Exception as msg:
