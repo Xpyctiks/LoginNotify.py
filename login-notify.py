@@ -107,7 +107,7 @@ def send_to_telegram(subject,message):
         "chat_id": f"{TELEGRAM_CHATID}",
         "text": f"{subject}\n{message}",
     }
-    response = requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", headers=headers, json=data)
+    response = requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", timeout=10, headers=headers, json=data)
     print(response.status_code)
     if response.status_code != 200:
         err = response.json()
