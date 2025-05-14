@@ -5,7 +5,7 @@ import sys
 import json
 import logging
 import logging.handlers
-import requests
+import httpx
 import asyncio
 import mysql.connector
 from ipwhois import IPWhois
@@ -104,19 +104,26 @@ def send_to_log(type,logData):
         logger.setLevel(logging.INFO)
         logger.info(f"Login-Notify: {logData}")
 
-async def send_to_telegram(subject,message):
+async def send_to_telegram(subject, message):
     headers = {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
     }
     data = {
-        "chat_id": f"{TELEGRAM_CHATID}",
+        "chat_id": TELEGRAM_CHATID,
         "text": f"{subject}\n{message}",
     }
-    response = await requests.post(f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage", timeout=10, headers=headers, json=data)
-    print(response.status_code)
-    if response.status_code != 200:
-        err = response.json()
-        send_to_log(f"error",f"Telegram bot error! Data: {err}")
+    try:
+        async with httpx.AsyncClient(timeout=10) as client:
+            response = await client.post(
+                f"https://api.telegram.org/bot{TELEGRAM_TOKEN}/sendMessage",
+                headers=headers,
+                json=data
+            )
+        print(response.status_code)
+        if response.status_code != 200:
+            send_to_log("error", f"Telegram bot error! Status: {response.status_code} Body: {response.text}")
+    except Exception as e:
+        send_to_log("error", f"Telegram send exception: {e}")
 
 def initDB():
     global DB_HOST
