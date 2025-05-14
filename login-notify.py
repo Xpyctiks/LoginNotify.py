@@ -2,7 +2,6 @@
 
 import os
 import sys
-import subprocess
 import json
 import logging
 import logging.handlers
@@ -72,12 +71,17 @@ def generate_default_config():
         "telegramChat": "",
         "connectVia": "port",
     }
-    with open(CONFIG_FILE, 'w',encoding='utf8') as file:
-        json.dump(config, file, indent=4)
-    os.chmod(CONFIG_FILE, 0o600)
-    send_to_log(f"info",f"First launch. New config file {CONFIG_FILE} generated and needs to be configured.Then you will be able to autocreate MySQL tables for this program.")
-    print(f"First launch. New config file {CONFIG_FILE} generated and needs to be configured.Then you will be able to autocreate MySQL tables for this program.")
-    quit()
+    try:
+        with open(CONFIG_FILE, 'w',encoding='utf8') as file:
+            json.dump(config, file, indent=4)
+        os.chmod(CONFIG_FILE, 0o600)
+        send_to_log(f"info",f"First launch. New config file {CONFIG_FILE} generated and needs to be configured.Then you will be able to autocreate MySQL tables for this program.")
+        print(f"First launch. New config file {CONFIG_FILE} generated and needs to be configured.Then you will be able to autocreate MySQL tables for this program.")
+        quit()
+    except Exception as msg:
+        print(f"New config file creation error! {msg}")
+        send_to_log(f"error",{msg})
+        quit()
 
 def show_help():
     print(f"Usage:\n\t./<this_script_name> initDB <mysql_root_pwd> ")
@@ -169,16 +173,16 @@ def initDB():
             f"{GRN}",
             f"{FLS}",
         ]
-        cursor = connection.cursor(buffered=True)
-        for command in query:
-            cursor.execute(command)
-        connection.commit()
-        cursor.close()
-        connection.close()
-        print(f"Database initialized successfully!")
-        print(f"Finally you need to add to the end of /etc/pam.d/sshd next string: \"session optional pam_exec.so [{os.path.abspath(__file__)}]\"")
-        print(f"If you want to log TTYs logins, not only SSH: add to the end of /etc/pam.d/login the string above too")
-        send_to_log(f"info",f"MySQL database initialized successfully!")
+        with connection.cursor(buffered=True) as cursor:
+            for command in query:
+                cursor.execute(command)
+            connection.commit()
+            cursor.close()
+            connection.close()
+            print(f"Database initialized successfully!")
+            print(f"Finally you need to add to the end of /etc/pam.d/sshd next string: \"session optional pam_exec.so [{os.path.abspath(__file__)}]\"")
+            print(f"If you want to log TTYs logins, not only SSH: add to the end of /etc/pam.d/login the string above too")
+            send_to_log(f"info",f"MySQL database initialized successfully!")
     except Exception as msg:
         print(f"MySQL Error! {msg}")
         send_to_log(f"error",{msg})
@@ -210,13 +214,13 @@ def addIP():
                 collation="utf8mb4_bin",
             )
         query = (f"INSERT INTO `tIPs` (`IP`, `Comment`) VALUES ('{sys.argv[2]}', '{sys.argv[3]}');")
-        cursor = connection.cursor(buffered=True)
-        cursor.execute(query)
-        connection.commit()
-        cursor.close()
-        connection.close()
-        print(f"IP: \"{sys.argv[2]}\" with comment: \"{sys.argv[3]}\" successfully added!")
-        send_to_log(f"info",f"IP: \"{sys.argv[2]}\" with comment: \"{sys.argv[3]}\" successfully added!")
+        with connection.cursor(buffered=True) as cursor:
+            cursor.execute(query)
+            connection.commit()
+            cursor.close()
+            connection.close()
+            print(f"IP: \"{sys.argv[2]}\" with comment: \"{sys.argv[3]}\" successfully added!")
+            send_to_log(f"info",f"IP: \"{sys.argv[2]}\" with comment: \"{sys.argv[3]}\" successfully added!")
     except Exception as msg:
         print(f"MySQL Error! {msg}")
         send_to_log(f"error",{msg})
@@ -248,13 +252,13 @@ def delIP():
                 collation="utf8mb4_bin",
             )
         query = (f"DELETE FROM `tIPs` WHERE IP='{sys.argv[2]}'")
-        cursor = connection.cursor(buffered=True)
-        cursor.execute(query)
-        connection.commit()
-        cursor.close()
-        connection.close()
-        print(f"IP: \"{sys.argv[2]}\" deleted successfully!")
-        send_to_log(f"info",f"IP: \"{sys.argv[2]}\" deleted successfully!")
+        with connection.cursor(buffered=True) as cursor:
+            cursor.execute(query)
+            connection.commit()
+            cursor.close()
+            connection.close()
+            print(f"IP: \"{sys.argv[2]}\" deleted successfully!")
+            send_to_log(f"info",f"IP: \"{sys.argv[2]}\" deleted successfully!")
     except Exception as msg:
         print(f"MySQL Error! {msg}")
         send_to_log(f"error",{msg})
@@ -292,8 +296,9 @@ def mainCheck():
         if PAM_TYPE == "open_session":
             PAM_TYPE="🏄Login"
         query = f"SELECT * FROM `tIPs` where IP='{PAM_RHOST}'"
-        cursor = connection.cursor(buffered=True)
-        cursor.execute(query)
+        #cursor = connection.cursor(buffered=True)
+        with connection.cursor(buffered=True) as cursor:
+            cursor.execute(query)
         res = cursor.fetchall()
         time=datetime.now().strftime('%H:%M:%S %d.%m.%Y')
         if len(res) > 0:
